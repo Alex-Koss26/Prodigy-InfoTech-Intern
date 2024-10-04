@@ -1,0 +1,84 @@
+import os
+from tkinter import Tk, filedialog, Button, Label, Entry, StringVar, messagebox
+from PIL import Image, ImageTk
+
+# Функція для шифрування/дешифрування
+def encrypt_decrypt_image(image_path, output_path, key, operation, algorithm="add"):
+    if not os.path.exists(image_path):
+        messagebox.showerror("Error", "Файл не знайдено!")
+        return
+
+    try:
+        img = Image.open(image_path)
+        pixels = img.load()
+        width, height = img.size
+
+        for x in range(width):
+            for y in range(height):
+                r, g, b = pixels[x, y]
+
+                if operation == "encrypt":
+                    if algorithm == "add":
+                        r = (r + key) % 256
+                        g = (g + key) % 256
+                        b = (b + key) % 256
+                    elif algorithm == "xor":
+                        r = r ^ key
+                        g = g ^ key
+                        b = b ^ key
+                elif operation == "decrypt":
+                    if algorithm == "add":
+                        r = (r - key) % 256
+                        g = (g - key) % 256
+                        b = (b - key) % 256
+                    elif algorithm == "xor":
+                        r = r ^ key
+                        g = g ^ key
+                        b = b ^ key
+
+                pixels[x, y] = (r, g, b)
+
+        img.save(output_path)
+        messagebox.showinfo("Success", f"Операція '{operation}' успішна! Результат збережено як {output_path}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Помилка під час обробки зображення: {e}")
+
+# Функція для вибору файлу
+def select_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
+    if file_path:
+        selected_file.set(file_path)
+
+# Функція запуску шифрування/дешифрування
+def start_process(operation):
+    key = int(key_entry.get())
+    algorithm = algorithm_var.get()
+    image_path = selected_file.get()
+    output_path = f"{operation}_{os.path.basename(image_path)}"
+    encrypt_decrypt_image(image_path, output_path, key, operation, algorithm)
+
+# Налаштування GUI
+root = Tk()
+root.title("Image Encryption Tool")
+
+# Обираємо файл
+selected_file = StringVar()
+Button(root, text="Вибрати зображення", command=select_file).pack(pady=10)
+Label(root, textvariable=selected_file).pack()
+
+# Введення ключа
+Label(root, text="Введіть ключ (число):").pack(pady=10)
+key_entry = Entry(root)
+key_entry.pack()
+
+# Алгоритм шифрування
+algorithm_var = StringVar(value="add")
+Label(root, text="Виберіть алгоритм шифрування:").pack(pady=10)
+Button(root, text="Додавання", command=lambda: algorithm_var.set("add")).pack(pady=2)
+Button(root, text="XOR", command=lambda: algorithm_var.set("xor")).pack(pady=2)
+
+# Кнопки для шифрування та дешифрування
+Button(root, text="Шифрувати", command=lambda: start_process("encrypt")).pack(pady=10)
+Button(root, text="Дешифрувати", command=lambda: start_process("decrypt")).pack(pady=10)
+
+root.mainloop()
