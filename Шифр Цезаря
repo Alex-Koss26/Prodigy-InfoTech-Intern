@@ -1,0 +1,93 @@
+def choose_alphabet():
+    """
+    Функція для вибору алфавіту
+    Повертає алфавіт та його назву
+    """
+    print("Оберіть алфавіт:")
+    print("1. Англійський")
+    print("2. Український")
+    print("3. Класичний латинський (без розширень)")
+
+    choice = input("Ваш вибір (1/2/3): ")
+
+    if choice == '1':
+        return 'abcdefghijklmnopqrstuvwxyz', 'англійський'
+    elif choice == '2':
+        return 'абвгґдежзийіклмнопрстуфхцчшщьюя', 'український'
+    elif choice == '3':
+        return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'класичний латинський'
+    else:
+        print("Невірний вибір. Використовується англійський алфавіт за замовчуванням.")
+        return 'abcdefghijklmnopqrstuvwxyz', 'англійський'
+
+def validate_shift(shift, alphabet_size):
+    """
+    Перевірка валідності зсуву
+    """
+    if shift < 0:
+        print("Зсув не може бути від'ємним. Використовується позитивний зсув.")
+        return shift % alphabet_size
+    return shift % alphabet_size
+
+def preserve_case(text, encrypted_text, alphabet):
+    """
+    Збереження оригінального регістру символів
+    """
+    result = ""
+    for original, encrypted in zip(text, encrypted_text):
+        if original.isupper():
+            result += encrypted.upper()
+        else:
+            result += encrypted.lower()
+    return result
+
+def encrypt(text, shift, alphabet):
+    """
+    Шифрування тексту
+    """
+    result = ""
+    alphabet_size = len(alphabet)
+
+    for char in text:
+        if char in alphabet:
+            new_index = (alphabet.index(char) + shift) % alphabet_size
+            result += alphabet[new_index]
+        else:
+            result += char
+    return result
+
+def decrypt(text, shift, alphabet):
+    """
+    Дешифрування тексту
+    """
+    return encrypt(text, -shift, alphabet)
+
+def caesar_cipher():
+    """
+    Основна функція програми
+    """
+    alphabet, lang_name = choose_alphabet()
+
+    while True:
+        message = input(f"Введіть повідомлення ({lang_name} алфавіт): ")
+        shift = int(input("Введіть величину зсуву: "))
+        shift = validate_shift(shift, len(alphabet))
+        action = input("Хочете зашифрувати ('encrypt') чи дешифрувати ('decrypt')?: ").lower()
+
+        if action == 'encrypt':
+            encrypted_message = encrypt(message, shift, alphabet)
+            encrypted_message_with_case = preserve_case(message, encrypted_message, alphabet)
+            print(f"Зашифроване повідомлення: {encrypted_message_with_case}")
+        elif action == 'decrypt':
+            decrypted_message = decrypt(message, shift, alphabet)
+            decrypted_message_with_case = preserve_case(message, decrypted_message, alphabet)
+            print(f"Дешифроване повідомлення: {decrypted_message_with_case}")
+        else:
+            print("Невідома дія. Виберіть 'encrypt' або 'decrypt'.")
+
+        repeat = input("Хочете повторити операцію? (так/ні): ").lower()
+        if repeat != 'так':
+            break
+
+# Запуск програми
+caesar_cipher()
