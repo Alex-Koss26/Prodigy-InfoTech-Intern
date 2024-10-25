@@ -1,2 +1,2 @@
-# c-
+# Prodigy InfoTech
 стажування
